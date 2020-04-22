@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+*.vs
+*.sln
+*.db
+
+/.gradle
+/build
+/out
+/CMakeSettings.json

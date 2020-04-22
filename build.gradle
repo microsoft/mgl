@@ -1,0 +1,127 @@
+plugins {
+    id 'java'
+    id 'com.palantir.git-version' version '0.5.2'
+}
+
+compileJava {
+    options.compilerArgs = ['-proc:none', '-Xlint:all','-Werror','-Xdiags:verbose']
+}
+compileTestJava {
+    options.compilerArgs = ['-proc:none', '-Xlint:all','-Werror','-Xdiags:verbose']
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://artifactory.broadinstitute.org/artifactory/libs-snapshot/" }
+}
+
+dependencies {
+    compileOnly 'org.broadinstitute:gatk-native-bindings:0.1.0-rc-1'
+    compileOnly 'org.apache.logging.log4j:log4j-api:2.5'
+    compileOnly 'org.apache.logging.log4j:log4j-core:2.5'
+    compileOnly 'com.intel.gkl:gkl:0.8.2'
+    compileOnly 'org.testng:testng:6.9.9'
+}
+
+//===================================================================
+// build
+//===================================================================
+final nativeBuildDir = "$buildDir/native"
+
+final tbbDir = "$projectDir/vcpkg/installed/x64-windows/share/tbb"
+
+task cmakeConfig(type: Exec) {
+    // hide stdout, but print stderr
+    standardOutput = new ByteArrayOutputStream()
+    doFirst {mkdir nativeBuildDir}
+    workingDir nativeBuildDir
+    commandLine 'cmake', '-DTBB_DIR=$tbbDir', '-Wno-dev', projectDir
+    inputs.files fileTree(projectDir) {include '**/CMakeLists.txt'}
+    outputs.files "$nativeBuildDir/Makefile"
+}
+
+task cmakeBuild(type: Exec) {
+    // hide stdout, but print stderr
+    standardOutput = new ByteArrayOutputStream()
+    workingDir nativeBuildDir
+    commandLine 'make'
+    // always run this task
+    outputs.upToDateWhen {false}
+}
+
+task copyNativeLib(type: Copy) {
+    from nativeBuildDir
+    into "$buildDir/classes/main/com/microsoft/mgl/native"
+    include '*.so'
+    include '*.dylib'
+}
+
+compileJava.finalizedBy copyNativeLib
+copyNativeLib.finalizedBy buildOnMac
+copyNativeLib.dependsOn cmakeBuild
+cmakeBuild.dependsOn cmakeConfig
+
+//===================================================================
+// test
+//===================================================================
+
+test {
+    useTestNG()
+
+    // propagate system properties to test JVM
+    systemProperties = System.getProperties()
+
+    if (project.hasProperty('debug')) {
+        jvmArgs '-verbose:jni', '-Xcheck:jni', '-XX:+RestoreMXCSROnJNICalls'
+    }
+    else {
+        jvmArgs '-Xcheck:jni', '-XX:+RestoreMXCSROnJNICalls'
+    }
+
+    testLogging {
+        if (!System.env.CI.toString().toBoolean()) {
+            events "passed", "skipped", "failed", "standardOut", "standardError"
+        }
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            }
+        }
+    }
+
+    // always rerun tests
+    outputs.upToDateWhen { false }
+}
+
+//===================================================================
+// release
+//===================================================================
+
+final isRelease = project.hasProperty("release")
+version = (isRelease ? gitVersion() : gitVersion() + "-SNAPSHOT").replaceAll(".dirty", "")
+
+group = "com.microsoft.mgl"
+
+jar {
+    archiveBaseName = "mgl"
+    // include LICENSE file in jar
+    from "LICENSE"
+    exclude "log4j2.xml"
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
