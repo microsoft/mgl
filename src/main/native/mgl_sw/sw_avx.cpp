@@ -14,7 +14,7 @@ int align_avx(const char *tseq, int target_length, const char *qseq, int query_l
 	int ext_query_length = query_length + 2 * padding, ext_target_length; 
 
 	// extend and reverse query to use in score and backtrack matrix computation
-	reversed_query = (int*)_aligned_malloc(ext_query_length * sizeof(int), alignment);
+	reversed_query = (int*)aligned_alloc(ext_query_length * sizeof(int), alignment);
 	memset(reversed_query, 0, ext_query_length * sizeof(int));
 	for (int i = 0; i < query_length; i++)
 		reversed_query[padding + query_length - 1 - i] = (int)qseq[i];
@@ -23,23 +23,23 @@ int align_avx(const char *tseq, int target_length, const char *qseq, int query_l
 	int target_padding;
 	target_padding = (target_length % default_bw == 0) ? 0 : (default_bw - target_length % default_bw);
 	ext_target_length = target_length + target_padding;
-	extended_target = (int*)_aligned_malloc(ext_target_length * sizeof(int), alignment);
+	extended_target = (int*)aligned_alloc(ext_target_length * sizeof(int), alignment);
 	memset(extended_target, 0, ext_target_length * sizeof(int));
 	for (int i = 0; i < target_length; i++)
 		extended_target[i] = (int)tseq[i];
 
 	// backtrack matrix
 	int * bcktrack;
-	bcktrack = (int*)_aligned_malloc((query_length + padding - 1) * (target_length + target_padding) * sizeof(int), alignment);
+	bcktrack = (int*)aligned_alloc((query_length + padding - 1) * (target_length + target_padding) * sizeof(int), alignment);
 	memset(bcktrack, 0, (query_length + padding - 1) * (target_length + target_padding) * sizeof(int));
 
 	// arrays to save score, vertical step and vertical gap values for the next score band
 	int *score, *step, *gap;
-	score = (int*)_aligned_malloc( (ncol + padding) * sizeof(int), alignment);
+	score = (int*)aligned_alloc( (ncol + padding) * sizeof(int), alignment);
 	memset(score, 0, (ncol + padding) * sizeof(int));
-	step = (int*)_aligned_malloc((ncol + padding) * sizeof(int), alignment);
+	step = (int*)aligned_alloc((ncol + padding) * sizeof(int), alignment);
 	memset(step, 0, (ncol + padding) * sizeof(int));
-	gap = (int*)_aligned_malloc((query_length + 2 * padding) * sizeof(int), alignment);
+	gap = (int*)aligned_alloc((query_length + 2 * padding) * sizeof(int), alignment);
 	memset(gap, 0, (query_length + 2 * padding) * sizeof(int));
 
 	// initial conditions
@@ -96,12 +96,12 @@ int align_avx(const char *tseq, int target_length, const char *qseq, int query_l
 	
 	int offset = calculateCigar_avx(bcktrack, nrow, ncol, default_bw, overhangStrategy, &ez, result_cigar);
 	
-	_aligned_free(reversed_query);
-	_aligned_free(extended_target);
-	_aligned_free(score);
-	_aligned_free(step);
-	_aligned_free(gap);
-	_aligned_free(bcktrack);
+	free(reversed_query);
+	free(extended_target);
+	free(score);
+	free(step);
+	free(gap);
+	free(bcktrack);
 
 	return offset;
 	

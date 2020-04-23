@@ -13,8 +13,8 @@ inline int _mm256_get_epi32(__m256i a, int idx)
 {
 	__m128i vidx = _mm_cvtsi32_si128(idx);
 	__m256i vidx256 = _mm256_castsi128_si256(vidx);
-	__m256i  shuffled = _mm256_permutevar8x32_epi32(a, vidx256);
-	return _mm256_cvtsi256_si32(shuffled);
+	__m256i shuffled = _mm256_permutevar8x32_epi32(a, vidx256);
+	return _mm256_extract_epi32(shuffled, 0);
 };
 
 template <size_t __N>

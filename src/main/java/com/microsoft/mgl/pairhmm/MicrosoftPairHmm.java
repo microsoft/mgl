@@ -17,7 +17,7 @@ import java.nio.IntBuffer;
 
 public class MicrosoftPairHmm implements PairHMMNativeBinding {
     private final static Logger logger = LogManager.getLogger(MicrosoftPairHmm.class);
-    private static final String NATIVE_LIBRARY_NAME = "mgl_pairhmm;tbb;tbbmalloc";
+    private static final String NATIVE_LIBRARY_NAME = "mgl_pairhmm";
 
     public MicrosoftPairHmm() {
     }
