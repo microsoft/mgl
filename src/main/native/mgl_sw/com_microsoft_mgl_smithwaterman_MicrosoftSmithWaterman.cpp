@@ -21,7 +21,6 @@ Revision History:
 
 --*/
 #include <regex>
-#include "cpuid.h"
 #include "com_microsoft_mgl_smithwaterman_MicrosoftSmithWaterman.h"
 #include "sw_common.h"
 #include "sw_scalar.h"
@@ -60,7 +59,7 @@ JNIEXPORT jint JNICALL Java_com_microsoft_mgl_smithwaterman_MicrosoftSmithWaterm
     jint offset = 0;
 // we skip substring check since it performed by SWNativeAlignerWrapper
  
-   	if ((cpuid::has_AVX2) && (queryLength >= 8))
+   	if (__builtin_cpu_supports("avx2") && (queryLength >= 8))
    	{
    		offset =  align_avx(target, targetLength, query, queryLength, parameters, overhangStrategy, &cigar);
 		cigar.copy((char*)env->GetDirectBufferAddress(cigarBuffer), cigar.length());

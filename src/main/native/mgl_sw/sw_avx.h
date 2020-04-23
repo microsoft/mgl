@@ -9,7 +9,7 @@ int calculateCigar_avx(int *bcktrack, int n, int m, int bandwidth, int overhangS
 
 
 
-__forceinline int _mm256_get_epi32(__m256i a, int idx)
+inline int _mm256_get_epi32(__m256i a, int idx)
 {
 	__m128i vidx = _mm_cvtsi32_si128(idx);
 	__m256i vidx256 = _mm256_castsi128_si256(vidx);
@@ -18,13 +18,13 @@ __forceinline int _mm256_get_epi32(__m256i a, int idx)
 };
 
 template <size_t __N>
-__forceinline __m256i _mm256_shift_left_si256(__m256i a, __m256i b) {
+inline __m256i _mm256_shift_left_si256(__m256i a, __m256i b) {
 	__m256i c = _mm256_permute2x128_si256(a, b, 0x03);
 	return _mm256_alignr_epi8(a, c, 16 - __N);
 };
 
 template <size_t __N>
-__forceinline __m256i _mm256_shift_left_si256(__m256i a) {
+inline __m256i _mm256_shift_left_si256(__m256i a) {
 	__m256i c = _mm256_permute2x128_si256(a, _mm256_setzero_si256(), 0x03);
 	return _mm256_alignr_epi8(a, c, 16 - __N);
 };

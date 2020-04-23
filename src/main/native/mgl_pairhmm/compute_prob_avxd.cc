@@ -6,18 +6,18 @@ using namespace std;
 const size_t bandWidth_pd = 4;
 
 template <size_t __N>
-__forceinline void _mm256_shift_left_si256(__m256i& a, __m256i b) {
+inline void _mm256_shift_left_si256(__m256i& a, __m256i b) {
 	__m256i c = _mm256_permute2x128_si256(a, b, 0x03);
 	a = _mm256_alignr_epi8(a, c, 16 - __N);
 }
 
 template <size_t __N>
-__forceinline void _mm256_shift_left_si256(__m256i& a) {
+inline void _mm256_shift_left_si256(__m256i& a) {
 	__m256i c = _mm256_permute2x128_si256(a, _mm256_setzero_si256(), 0x03);
 	a = _mm256_alignr_epi8(a, c, 16 - __N);
 }
 
-__forceinline __m256d _mm256_shift_left_pd(__m256d a, const __m256d b) {
+inline __m256d _mm256_shift_left_pd(__m256d a, const __m256d b) {
 	__m256i c = _mm256_permute2x128_si256(
 		_mm256_castpd_si256(a),
 		_mm256_castpd_si256(b),
@@ -30,12 +30,12 @@ __forceinline __m256d _mm256_shift_left_pd(__m256d a, const __m256d b) {
 			8));
 }
 
-__forceinline void _mm256_shift_left_pd(__m256d& a) {
+inline void _mm256_shift_left_pd(__m256d& a) {
 	a = _mm256_shift_left_pd(a, _mm256_setzero_pd());
 }
-__forceinline void ConvertChars_pd(const char* rs, __m256i &_rs)
+inline void ConvertChars_pd(const char* rs, __m256i &_rs)
 {
-	__m128i _rs128 = _mm_set1_epi64x((*((const __int32*)rs)) & 0x0f0f0f0fll);
+	__m128i _rs128 = _mm_set1_epi64x((*((const int32_t*)rs)) & 0x0f0f0f0fll);
 
 	__m128i _rsConverted = _mm_shuffle_epi8(
 		_mm_set_epi8(0, 4, 0, 0, 0, 0, 0, 0, 2, 0, 0, 3, 1, 0, 0, 0),
@@ -44,7 +44,7 @@ __forceinline void ConvertChars_pd(const char* rs, __m256i &_rs)
 	_rs = _mm256_cvtepi8_epi64(_rsConverted);
 }
 
-__forceinline __m256d ComputeDistm_pd(const __m256i _rs, const __m256d _distM, const __m256d _distN, __m256i _hap)
+inline __m256d ComputeDistm_pd(const __m256i _rs, const __m256d _distM, const __m256d _distN, __m256i _hap)
 {
 	__m256i _match = _mm256_or_si256(
 		_mm256_cmpeq_epi64(_rs, _hap),
@@ -59,14 +59,14 @@ __forceinline __m256d ComputeDistm_pd(const __m256i _rs, const __m256d _distM, c
 	);
 }
 
-__forceinline __m256d ComputeDistm_pd(const __m256i _rs, const __m256d _distM, const __m256d _distN, int64_t* i_hap, size_t col)
+inline __m256d ComputeDistm_pd(const __m256i _rs, const __m256d _distM, const __m256d _distN, int64_t* i_hap, size_t col)
 {
 	__m256i _hap = _mm256_loadu_si256((const __m256i*)(i_hap + col));
 
 	return ComputeDistm_pd(_rs, _distM, _distN, _hap);
 }
 
-__forceinline void AdvanceCellFirstRow(__m256d &_M0, __m256d &_X0, __m256d &_Y0, __m256d &_M1, __m256d &_X1, __m256d &_Y1, __m256d &_YInitial, double * &pOutput, __m256d &Distm0, __m256d &_pMM, __m256d &_pMX, __m256d &_pMY, __m256d &_pZZ)
+inline void AdvanceCellFirstRow(__m256d &_M0, __m256d &_X0, __m256d &_Y0, __m256d &_M1, __m256d &_X1, __m256d &_Y1, __m256d &_YInitial, double * &pOutput, __m256d &Distm0, __m256d &_pMM, __m256d &_pMX, __m256d &_pMY, __m256d &_pZZ)
 {
 	_M0 = _mm256_mul_pd(
 		Distm0,
@@ -109,7 +109,7 @@ __forceinline void AdvanceCellFirstRow(__m256d &_M0, __m256d &_X0, __m256d &_Y0,
 	pOutput += 3 * bandWidth_pd;
 }
 
-__forceinline void AdvanceCell(__m256d &_M0, __m256d &_X0, __m256d &_Y0, __m256d &_M1, __m256d &_X1, __m256d &_Y1, double * &pInput, double * &pOutput, __m256d &Distm0, __m256d &_pMM, __m256d &_pMX, __m256d &_pMY, __m256d &_pZZ)
+inline void AdvanceCell(__m256d &_M0, __m256d &_X0, __m256d &_Y0, __m256d &_M1, __m256d &_X1, __m256d &_Y1, double * &pInput, double * &pOutput, __m256d &Distm0, __m256d &_pMM, __m256d &_pMX, __m256d &_pMY, __m256d &_pZZ)
 {
 	_M0 = _mm256_mul_pd(
 		Distm0,
@@ -218,6 +218,8 @@ void compute_bulk_band_first(
 		i_r -= hapinfo.position - 1;
 	}
 
+	__m256d Distm0;
+
 	switch (hapinfo.position)
 	{
 	case 0:
@@ -238,7 +240,7 @@ void compute_bulk_band_first(
 		pOutput += 3 * bandWidth_pd;
 
 		// 1
-		__m256d Distm0 = ComputeDistm_pd(_rs, _distM, _distN, i_hap, --i_r);
+		Distm0 = ComputeDistm_pd(_rs, _distM, _distN, i_hap, --i_r);
 		AdvanceCellFirstRow(_M1, _X1, _Y1, _M0, _X0, _Y0, _YInitial, pOutput, Distm0, _pMM, _pMX, _pMY, _pZZ);
 
 		i += 2;
@@ -379,6 +381,7 @@ void compute_bulk_band(
 		i += hapinfo.position;
 		i_r -= hapinfo.position - 1;
 	}
+	__m256d Distm0;
 
 	switch (hapinfo.position)
 	{
@@ -401,7 +404,7 @@ void compute_bulk_band(
 		pOutput += 3 * bandWidth_pd;
 
 		// 1
-		__m256d Distm0 = ComputeDistm_pd(_rs, _distM, _distN, i_hap, --i_r);
+		Distm0 = ComputeDistm_pd(_rs, _distM, _distN, i_hap, --i_r);
 		AdvanceCell(_M1, _X1, _Y1, _M0, _X0, _Y0, pInput, pOutput, Distm0, _pMM, _pMX, _pMY, _pZZ);
 
 		i += 2;
@@ -480,7 +483,7 @@ void prepareReadParams(Context<double> &ctx, readinfo &read, double fGapM, __m25
 {
 	ConvertChars_pd(read.rs + row, _rs);
 
-	__m128i _q128 = _mm_set1_epi64x(*((const __int32*)(read.q + row)));
+	__m128i _q128 = _mm_set1_epi64x(*((const int32_t*)(read.q + row)));
 	__m256i _q = _mm256_cvtepi8_epi64(_q128);
 
 	__m256i _qMasked = _mm256_and_si256(
@@ -757,7 +760,7 @@ void compute_prob_avxd(readinfo &read, vector<hapinfo> &hap_array)
 			// Copy correct row to row 0
 			double* pOutput = pRow0 + 3 * bandWidth_pd * COLS + 3 * bandWidth_pd * bandWidth_pd - 1;
 
-			size_t firstCopied = max(firstDistinct, 4ull);
+			size_t firstCopied = std::max(firstDistinct, 4ul);
 
 			for (size_t c = COLS + bandWidth_pd; c-- > firstCopied; )
 			{

@@ -8,8 +8,8 @@
 #endif
 
 #include <vector>
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdint>
 
 #include "Context.h"
 

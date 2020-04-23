@@ -29,14 +29,14 @@ dependencies {
 //===================================================================
 final nativeBuildDir = "$buildDir/native"
 
-final tbbDir = "$projectDir/vcpkg/installed/x64-windows/share/tbb"
+final tbbDir = "-DTBB_DIR=$projectDir/vcpkg/installed/x64-linux/share/tbb"
 
 task cmakeConfig(type: Exec) {
     // hide stdout, but print stderr
     standardOutput = new ByteArrayOutputStream()
     doFirst {mkdir nativeBuildDir}
     workingDir nativeBuildDir
-    commandLine 'cmake', '-DTBB_DIR=$tbbDir', '-Wno-dev', projectDir
+    commandLine 'cmake', tbbDir, '-Wno-dev', projectDir
     inputs.files fileTree(projectDir) {include '**/CMakeLists.txt'}
     outputs.files "$nativeBuildDir/Makefile"
 }
@@ -58,7 +58,6 @@ task copyNativeLib(type: Copy) {
 }
 
 compileJava.finalizedBy copyNativeLib
-copyNativeLib.finalizedBy buildOnMac
 copyNativeLib.dependsOn cmakeBuild
 cmakeBuild.dependsOn cmakeConfig
 

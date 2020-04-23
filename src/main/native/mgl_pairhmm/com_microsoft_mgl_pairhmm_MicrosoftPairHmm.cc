@@ -25,7 +25,6 @@
 #include <regex>
 #include <vector>
 
-#include "cpuid.h"
 #include "pairhmm_common.h"
 #include "com_microsoft_mgl_pairhmm_MicrosoftPairHmm.h"
 #include "compute_prob_scalar.h"
@@ -63,7 +62,7 @@ JNIEXPORT void JNICALL Java_com_microsoft_mgl_pairhmm_MicrosoftPairHmm_initNativ
 	//	g_compute_prob_float = compute_fp_avx512s;
 	//	g_compute_prob_double = compute_fp_avx512d;
 	//}
-	if (cpuid::has_AVX2)
+	if (__builtin_cpu_supports("avx2"))
 	{
 		g_compute_prob_float = compute_prob_avxf;
 		g_compute_prob_double = compute_prob_avxd;

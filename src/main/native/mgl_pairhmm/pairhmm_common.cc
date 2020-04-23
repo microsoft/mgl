@@ -21,7 +21,7 @@ void computeHaplotypeSimilarities(std::vector<hapinfo> & hap_array, size_t &COLS
 
 		if (hap_array[hap_idx - 1].haplen >= 8)
 		{
-			size_t commonLen = min(hap_array[hap_idx - 1].haplen, hap_array[hap_idx].haplen);
+			size_t commonLen = std::min(hap_array[hap_idx - 1].haplen, hap_array[hap_idx].haplen);
 
 			for (; pos < commonLen; pos++)
 			{
@@ -66,8 +66,7 @@ void DebugDump(
 	float** M, float ** X, float ** Y,
 	size_t ROWS, size_t COLS)
 {
-	FILE* fTable;
-	fopen_s(&fTable, "pairHmm.csv", "w");
+	FILE* fTable = fopen("pairHmm.csv", "w");
 
 	fprintf(fTable, ", ");
 	for (size_t cc = 0; cc < COLS; cc++)
@@ -108,8 +107,7 @@ void DebugDump(
 	double** M, double ** X, double ** Y,
 	size_t ROWS, size_t COLS)
 {
-	FILE* fTable;
-	fopen_s(&fTable, "pairHmm.csv", "w");
+	FILE* fTable = fopen("pairHmm.csv", "w");
 
 	fprintf(fTable, ", ");
 	for (size_t cc = 0; cc < COLS; cc++)
