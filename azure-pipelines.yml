@@ -14,9 +14,7 @@ steps:
   inputs:
     scriptPath: ./vcpkg/bootstrap-vcpkg.sh
 
-- script: |
-    echo installing TBB
-    ./vcpkg/vcpkg install tbb
+- script: ./vcpkg/vcpkg install tbb
   displayName: 'Install TBB'
 - task: Gradle@2
   inputs:
