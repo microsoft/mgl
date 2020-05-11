@@ -10,6 +10,8 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+- checkout: self  # self represents the repo where the initial Pipelines YAML file was found
+  submodules: true
 - task: ShellScript@2
   inputs:
     scriptPath: ./vcpkg/bootstrap-vcpkg.sh
