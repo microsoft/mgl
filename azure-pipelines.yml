@@ -29,3 +29,6 @@ steps:
     publishJUnitResults: true
     testResultsFiles: '**/TEST-*.xml'
     tasks: 'build'
+  env:
+    ORG_GRADLE_PROJECT_signingKey: $(ORG_GRADLE_PROJECT_signingKey)
+    ORG_GRADLE_PROJECT_signingPassword: $(ORG_GRADLE_PROJECT_signingPassword)
