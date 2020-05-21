@@ -5,6 +5,17 @@ plugins {
     id 'com.palantir.git-version' version '0.5.2'
 }
 
+final lastTag = versionDetails().lastTag
+final gitVersion = gitVersion()
+final isRelease = gitVersion == lastTag
+
+version = (isRelease ? gitVersion : gitVersion + "-SNAPSHOT").replaceAll(".dirty", "")
+
+println "GitVersion: ${gitVersion}"
+println "LastTag: ${lastTag}"
+println "IsRelease: ${isRelease}"
+println "Version: ${version}"
+
 compileJava {
     options.compilerArgs = ['-proc:none', '-Xlint:all','-Werror','-Xdiags:verbose']
 }
@@ -97,17 +108,10 @@ test {
 // release
 //===================================================================
 
-final isRelease = project.hasProperty("release") && project.getProperty("release") == "true"
-version = (isRelease ? gitVersion() : gitVersion() + "-SNAPSHOT").replaceAll(".dirty", "")
-
 jar {
     // include LICENSE file in jar
     from "LICENSE"
     exclude "log4j2.xml"
-}
-
-tasks.withType(GenerateModuleMetadata) {
-    enabled = false
 }
 
 java {
@@ -116,11 +120,19 @@ java {
 }
 
 signing {
-    required { isRelease && gradle.taskGraph.hasTask(uploadArchives) }
+    required { isRelease && gradle.taskGraph.hasTask("publish") }
     def signingKey = findProperty("signingKey")
     def signingPassword = findProperty("signingPassword")
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications
+}
+
+tasks.withType(Sign) {
+    onlyIf { isRelease }
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
 
 publishing {
