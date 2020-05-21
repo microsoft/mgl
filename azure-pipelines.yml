@@ -20,15 +20,15 @@ steps:
   displayName: 'Install TBB'
 - task: Gradle@2
   inputs:
-    workingDirectory: ''
     gradleWrapperFile: 'gradlew'
-    gradleOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.8'
-    jdkArchitectureOption: 'x64'
+    options: '--info'
+    tasks: 'publish'
     publishJUnitResults: true
     testResultsFiles: '**/TEST-*.xml'
-    tasks: 'publish'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.8'
+    gradleOptions: '-Xmx3072m'
+    sonarQubeRunAnalysis: false
   env:
     ORG_GRADLE_PROJECT_signingKey: $(ORG_GRADLE_PROJECT_signingKey)
     ORG_GRADLE_PROJECT_signingPassword: $(ORG_GRADLE_PROJECT_signingPassword)
