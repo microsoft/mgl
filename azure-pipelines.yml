@@ -28,7 +28,7 @@ steps:
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/TEST-*.xml'
-    tasks: 'build'
+    tasks: 'publish'
   env:
     ORG_GRADLE_PROJECT_signingKey: $(ORG_GRADLE_PROJECT_signingKey)
     ORG_GRADLE_PROJECT_signingPassword: $(ORG_GRADLE_PROJECT_signingPassword)
