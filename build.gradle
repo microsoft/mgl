@@ -1,11 +1,14 @@
 plugins {
     id 'java'
+    id 'maven-publish'
+    id 'signing'
     id 'com.palantir.git-version' version '0.5.2'
 }
 
 compileJava {
     options.compilerArgs = ['-proc:none', '-Xlint:all','-Werror','-Xdiags:verbose']
 }
+
 compileTestJava {
     options.compilerArgs = ['-proc:none', '-Xlint:all','-Werror','-Xdiags:verbose']
 }
@@ -68,17 +71,14 @@ cmakeBuild.dependsOn cmakeConfig
 
 test {
     useTestNG()
-
     // propagate system properties to test JVM
     systemProperties = System.getProperties()
-
     if (project.hasProperty('debug')) {
         jvmArgs '-verbose:jni', '-Xcheck:jni', '-XX:+RestoreMXCSROnJNICalls'
     }
     else {
         jvmArgs '-Xcheck:jni', '-XX:+RestoreMXCSROnJNICalls'
     }
-
     testLogging {
         if (!System.env.CI.toString().toBoolean()) {
             events "passed", "skipped", "failed", "standardOut", "standardError"
@@ -89,7 +89,6 @@ test {
             }
         }
     }
-
     // always rerun tests
     outputs.upToDateWhen { false }
 }
@@ -98,30 +97,73 @@ test {
 // release
 //===================================================================
 
-final isRelease = project.hasProperty("release")
+final isRelease = project.hasProperty("release") && project.getProperty("release") == "true"
 version = (isRelease ? gitVersion() : gitVersion() + "-SNAPSHOT").replaceAll(".dirty", "")
 
-group = "com.microsoft.mgl"
-
 jar {
-    archiveBaseName = "mgl"
     // include LICENSE file in jar
     from "LICENSE"
     exclude "log4j2.xml"
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from 'build/docs/javadoc'
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
 
-task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
-artifacts {
-    archives jar
-    archives javadocJar
-    archives sourcesJar
+signing {
+    required { isRelease && gradle.taskGraph.hasTask(uploadArchives) }
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications
+}
+
+publishing {
+    repositories {
+        maven {
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = isRelease ? releasesRepoUrl : snapshotsRepoUrl
+            credentials {
+                username = project.getProperty("sonatypeUsername")
+                password = project.getProperty("sonatypePassword")
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = "com.microsoft.genomics"
+            artifactId = "mgl"
+
+            pom {
+                name = "Microsoft Genomics Library (MGL)"
+                description = "Microsoft Genomics Library contains highly optimized compute cores for genomics applications"
+                url = "https://github.com/microsoft/mgl"
+                developers {
+                    developer {
+                        id = "microsoft"
+                        name = "Microsoft"
+                    }
+                }
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/licenses/MIT"
+                        distribution = "repo"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git@github.com:microsoft/mgl.git"
+                    developerConnection = "scm:git:git@github.com:microsoft/mgl.git"
+                    url = "https://github.com/microsoft/mgl.git"
+                }
+            }
+        }
+    }
 }
